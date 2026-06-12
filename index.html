@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buda × Will 出海增长协作台</title>
+<style>
+  :root{
+    --paper:#F7F2E9; --paper2:#FBF8F1; --ink:#211D17; --ink2:#352D22;
+    --gold:#A9842F; --gold-soft:#C9A85E; --lobster:#B9472C;
+    --text:#2A2620; --muted:#8A8071; --line:#E6DCC8;
+    --ok:#5E7A52; --prog:#A9842F; --todo:#9A8E79;
+    --sidebar:280px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--paper); color:var(--text);
+    font-family:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;
+    font-size:13px; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  .serif{font-family:"Noto Serif CJK SC","Songti SC",serif;}
+  button{font-family:inherit; cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+
+  /* ===== Layout ===== */
+  .shell{display:flex; min-height:100vh;}
+  .side{width:var(--sidebar); flex:0 0 var(--sidebar); background:linear-gradient(180deg,var(--ink) 0%,var(--ink2) 100%);
+    color:#E9DFCB; padding:22px 16px 30px; position:sticky; top:0; height:100vh; overflow-y:auto;}
+  .main{flex:1; min-width:0; padding:26px 30px 60px; max-width:1180px;}
+
+  /* sidebar brand */
+  .brand{position:relative; padding:0 6px 16px; border-bottom:1px solid rgba(201,168,94,.22); margin-bottom:14px;}
+  .brand .eyebrow{font-size:10px; letter-spacing:.3em; color:var(--gold-soft); text-transform:uppercase; font-weight:600;}
+  .brand h1{font-family:"Noto Serif CJK SC",serif; font-size:20px; color:#FBF6EC; margin:7px 0 4px; letter-spacing:.03em;}
+  .brand .sub{font-size:10.5px; color:#A89B81; line-height:1.5;}
+  .enso{position:absolute; right:-4px; top:-6px; width:60px; height:60px; opacity:.4;}
+
+  .navgrp{margin:14px 0 4px; font-size:9.5px; letter-spacing:.18em; color:var(--gold-soft); text-transform:uppercase; padding:0 8px; font-weight:600;}
+  .navitem{display:flex; align-items:center; gap:9px; padding:8px 9px; border-radius:9px; color:#D8CDB6;
+    font-size:12.5px; cursor:pointer; transition:.15s; margin-bottom:1px;}
+  .navitem:hover{background:rgba(201,168,94,.12); color:#FBF6EC;}
+  .navitem.on{background:rgba(201,168,94,.2); color:#FBF6EC;}
+  .navitem .no{font-family:"Noto Serif CJK SC",serif; font-size:11px; color:var(--gold-soft); width:18px; text-align:center; flex:0 0 auto;}
+  .navitem .tier{margin-left:auto; font-size:8.5px; padding:1px 6px; border-radius:10px; background:rgba(201,168,94,.18); color:var(--gold-soft);}
+
+  .sidefoot{margin-top:18px; padding:0 8px;}
+  .sidefoot button{width:100%; background:transparent; border:1px solid rgba(201,168,94,.3); color:#C9A85E;
+    padding:7px; border-radius:8px; font-size:10.5px; margin-top:6px;}
+  .sidefoot button:hover{background:rgba(201,168,94,.12);}
+
+  /* ===== Section header ===== */
+  .sh{display:flex; align-items:baseline; gap:11px; margin:2px 0 14px;}
+  .sh .no{font-family:"Noto Serif CJK SC",serif; font-size:14px; color:var(--gold); font-weight:700;
+    border:1.5px solid var(--gold); border-radius:50%; width:30px; height:30px;
+    display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+  .sh h2{font-family:"Noto Serif CJK SC",serif; font-size:21px; font-weight:700; letter-spacing:.02em;}
+  .sh .tag{margin-left:auto; font-size:10.5px; color:var(--muted); align-self:center;}
+  .lede{font-size:12px; color:var(--muted); margin:-6px 0 16px; max-width:760px; line-height:1.65;}
+
+  /* ===== Deliverable link bar ===== */
+  .linkbar{display:flex; gap:9px; flex-wrap:wrap; margin:-4px 0 16px;}
+  .dlink{display:inline-flex; align-items:center; gap:6px; background:var(--paper2); border:1px solid var(--line);
+    border-radius:9px; padding:7px 13px; font-size:11.5px; font-weight:600; color:var(--ink); text-decoration:none; transition:.14s;}
+  .dlink:hover{border-color:var(--gold-soft); background:#F3ECDC; color:var(--gold);}
+
+  /* ===== Buttons ===== */
+  .btn{background:var(--ink); color:#F3EBD9; border:none; padding:7px 14px; border-radius:8px; font-size:12px; font-weight:600;}
+  .btn:hover{background:var(--ink2);}
+  .btn.gold{background:var(--gold);} .btn.gold:hover{background:#96732a;}
+  .btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--line);}
+  .btn.ghost:hover{background:var(--paper2);}
+  .btn.sm{padding:4px 9px; font-size:11px;}
+  .bar{display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
+  .bar .grow{flex:1;}
+  .filt{border:1px solid var(--line); background:var(--paper2); border-radius:8px; padding:6px 10px; font-size:11.5px; color:var(--text);}
+
+  /* ===== Chips (stats) ===== */
+  .chips{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:11px; margin-bottom:18px;}
+  .chip{background:var(--paper2); border:1px solid var(--line); border-radius:11px; padding:13px 14px;}
+  .chip .k{font-size:10px; color:var(--muted);}
+  .chip .v{font-family:"Noto Serif CJK SC",serif; font-size:24px; font-weight:700; color:var(--ink); line-height:1.15; margin-top:3px;}
+  .chip .d{font-size:10px; color:var(--gold); margin-top:2px;}
+
+  /* ===== Kanban ===== */
+  .kanban{display:grid; grid-template-columns:repeat(3,1fr); gap:13px;}
+  .col{background:var(--paper2); border:1px solid var(--line); border-radius:12px; padding:13px 13px 16px; min-height:120px;}
+  .col .chead{display:flex; align-items:center; gap:8px; margin-bottom:11px;}
+  .dot{width:9px; height:9px; border-radius:50%; flex:0 0 auto;}
+  .col .chead .lab{font-weight:700; font-size:13px; font-family:"Noto Serif CJK SC",serif;}
+  .col .chead .n{margin-left:auto; font-size:11px; color:var(--muted);}
+  .col.done{border-top:3px solid var(--ok);} .col.prog{border-top:3px solid var(--prog);} .col.todo{border-top:3px solid var(--todo);}
+  .col.done .dot{background:var(--ok);} .col.prog .dot{background:var(--prog);} .col.todo .dot{background:var(--todo);}
+  .card{background:#fff; border:1px solid var(--line); border-radius:9px; padding:9px 10px; margin-bottom:8px; cursor:pointer; transition:.12s;}
+  .card:hover{border-color:var(--gold-soft); box-shadow:0 2px 8px rgba(33,29,23,.06);}
+  .card .t{font-weight:600; font-size:12px; line-height:1.4;}
+  .card .meta{display:flex; gap:6px; align-items:center; margin-top:6px; flex-wrap:wrap;}
+  .card .note{font-size:10.5px; color:var(--muted); margin-top:5px; line-height:1.45;}
+  .stars{color:var(--gold); font-size:11px; letter-spacing:1px;}
+  .stars .off{color:var(--line);}
+
+  /* lane badges */
+  .lane{display:inline-block; font-size:9.5px; padding:1px 7px; border-radius:10px; font-weight:600;}
+  .lane-视频{background:#FBF1ED; color:var(--lobster);}
+  .lane-竞品{background:#EFE9DC; color:var(--gold);}
+  .lane-SEO{background:#E7EEE2; color:var(--ok);}
+  .lane-推特{background:#E6EAF0; color:#46618A;}
+  .lane-KOL{background:#F0E7F0; color:#7A4A7A;}
+  .owner{font-size:10px; color:var(--muted);}
+
+  /* ===== Table ===== */
+  .tablewrap{overflow-x:auto; border:1px solid var(--line); border-radius:12px;}
+  table{width:100%; border-collapse:collapse; font-size:11.5px; background:var(--paper2);}
+  thead th{background:var(--ink); color:#EDE3CE; font-weight:600; text-align:left; padding:9px 11px; font-size:10.5px; letter-spacing:.02em; white-space:nowrap;}
+  tbody td{padding:9px 11px; border-top:1px solid var(--line); vertical-align:top;}
+  tbody tr:nth-child(even){background:#FAF6EC;}
+  tbody tr:hover{background:#F3ECDC;}
+  .rowact{white-space:nowrap;}
+  .rowact button{background:none; border:none; color:var(--gold); font-size:11px; margin-right:8px;}
+  .rowact button:hover{text-decoration:underline; color:var(--lobster);}
+  .badge{display:inline-block; font-size:9.5px; padding:2px 8px; border-radius:20px; font-weight:600; white-space:nowrap;}
+  .b-done{background:#E7EEE2; color:var(--ok);}
+  .b-prog{background:#F4EED9; color:var(--gold);}
+  .b-todo{background:#F0EADC; color:#9A7E45;}
+  .b-drop{background:#EFE7E4; color:#9A7E72;}
+  .b-key{background:#FBF1ED; color:var(--lobster);}
+  .b-blue{background:#E6EAF0; color:#46618A;}
+  .b-purple{background:#F0E7F0; color:#7A4A7A;}
+
+  /* ===== Cards grid (competitor / persona) ===== */
+  .cardgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:13px;}
+  .ccard{background:var(--paper2); border:1px solid var(--line); border-radius:12px; padding:14px 15px; position:relative;}
+  .ccard.dim{opacity:.62;}
+  .ccard h4{font-family:"Noto Serif CJK SC",serif; font-size:15px; font-weight:700; margin-bottom:2px;}
+  .ccard .row{font-size:11px; margin-top:6px; line-height:1.5;}
+  .ccard .row b{color:var(--ink); font-weight:600;}
+  .ccard .row .lab{color:var(--muted); display:inline-block; min-width:62px;}
+  .ccard .cact{position:absolute; top:11px; right:12px; display:flex; gap:8px;}
+  .ccard .cact button{background:none; border:none; color:var(--gold); font-size:11px;}
+  .ccard .cact button:hover{color:var(--lobster);}
+
+  /* ===== Insight box ===== */
+  .ins{background:var(--paper2); border-left:3px solid var(--gold); border-radius:0 10px 10px 0; padding:10px 15px; margin-bottom:14px; font-size:11.5px;}
+  .ins.key{border-left-color:var(--lobster); background:#FBF1ED;}
+  .ins b{color:var(--ink);}
+
+  /* ===== Checklist (video) ===== */
+  .ck{background:var(--paper2); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin-bottom:16px;}
+  .ck-item{display:flex; gap:10px; align-items:flex-start; padding:6px 0; font-size:12px; cursor:pointer; line-height:1.5;}
+  .ck-item .box{width:16px; height:16px; border:1.5px solid var(--gold); border-radius:4px; flex:0 0 auto; margin-top:2px;
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px;}
+  .ck-item.on .box{background:var(--gold);}
+  .ck-item.on .txt{color:var(--muted); text-decoration:line-through;}
+  .ck .lab{font-size:11px; font-weight:700; color:var(--gold); letter-spacing:.04em; margin:9px 0 5px;}
+  .ck .lab:first-child{margin-top:0;}
+
+  /* ===== Report bits (social matrix) ===== */
+  .charts{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:6px;}
+  .cbox{background:var(--paper2); border:1px solid var(--line); border-radius:12px; padding:14px 16px;}
+  .cbox h4{font-family:"Noto Serif CJK SC",serif; font-size:13px; font-weight:700; margin-bottom:2px;}
+  .cbox .cap{font-size:10px; color:var(--muted); margin-bottom:10px;}
+  .sbars{display:flex; flex-direction:column; gap:9px;}
+  .sbar{display:flex; align-items:center; gap:9px; font-size:11px;}
+  .sbar .bl{width:104px; flex:0 0 auto; color:var(--muted); text-align:right;}
+  .sbar .bt{flex:1; background:#EFE9DC; border-radius:5px; height:18px; overflow:hidden;}
+  .sbar .bf{height:100%; border-radius:5px;}
+  .sbar .bv{width:40px; flex:0 0 auto; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums;}
+  .prio{display:flex; gap:12px; align-items:flex-start; padding:9px 0; border-top:1px solid var(--line);}
+  .prio:first-child{border-top:none;}
+  .prio .rk{font-family:"Noto Serif CJK SC",serif; font-size:18px; font-weight:700; color:var(--gold); flex:0 0 26px; line-height:1.2;}
+  .prio .body .h{font-weight:700; font-size:12.5px;}
+  .prio .body .d{font-size:11px; color:var(--muted);}
+  .pf{font-weight:700; color:var(--ink); white-space:nowrap;}
+  .grp{font-size:9.5px; color:var(--gold); font-weight:600; letter-spacing:.04em; display:block;}
+  .tbc{color:var(--muted); font-style:italic;}
+  @media(max-width:860px){ .charts{grid-template-columns:1fr;} }
+
+  /* ===== Calendar ===== */
+  .calhead{display:flex; align-items:center; gap:14px; margin-bottom:12px;}
+  .calhead .mlabel{font-family:"Noto Serif CJK SC",serif; font-size:18px; font-weight:700; min-width:130px; text-align:center;}
+  .calgrid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
+  .caldow{text-align:center; font-size:10px; color:var(--muted); font-weight:600; padding-bottom:3px;}
+  .calcell{background:var(--paper2); border:1px solid var(--line); border-radius:8px; min-height:86px; padding:5px 6px; cursor:pointer; transition:.12s;}
+  .calcell:hover{border-color:var(--gold-soft);}
+  .calcell.empty{background:transparent; border:none; cursor:default;}
+  .calcell .dnum{font-size:11px; color:var(--muted); font-weight:600;}
+  .calcell .ev{font-size:9.5px; padding:2px 5px; border-radius:5px; margin-top:3px; line-height:1.35; cursor:pointer;}
+
+  /* ===== Modal ===== */
+  .mask{position:fixed; inset:0; background:rgba(33,29,23,.5); display:none; align-items:center; justify-content:center; z-index:50; padding:20px;}
+  .mask.show{display:flex;}
+  .modal{background:var(--paper); border-radius:14px; width:520px; max-width:100%; max-height:88vh; overflow-y:auto;
+    padding:22px 24px; box-shadow:0 20px 60px rgba(33,29,23,.35);}
+  .modal h3{font-family:"Noto Serif CJK SC",serif; font-size:17px; margin-bottom:14px;}
+  .fld{margin-bottom:12px;}
+  .fld label{display:block; font-size:10.5px; color:var(--muted); font-weight:600; margin-bottom:4px; letter-spacing:.02em;}
+  .fld input,.fld select,.fld textarea{width:100%; border:1px solid var(--line); background:var(--paper2); border-radius:8px;
+    padding:8px 10px; font-size:12.5px; color:var(--text);}
+  .fld textarea{min-height:64px; resize:vertical;}
+  .starpick{display:flex; gap:4px; font-size:20px; color:var(--line);}
+  .starpick span{cursor:pointer;}
+  .starpick span.on{color:var(--gold);}
+  .modal .mact{display:flex; gap:9px; justify-content:flex-end; margin-top:18px;}
+  .modal .mact .del{margin-right:auto; background:none; border:none; color:var(--lobster); font-size:11.5px;}
+
+  .empty-state{text-align:center; color:var(--muted); padding:36px; font-size:12px; background:var(--paper2); border:1px dashed var(--line); border-radius:12px;}
+  @media(max-width:860px){
+    .side{position:fixed; left:0; top:0; z-index:40; transform:translateX(-100%); transition:.2s;}
+    .side.open{transform:none;}
+    .main{padding:18px 16px 60px;}
+    .kanban{grid-template-columns:1fr;}
+    .menubtn{display:inline-flex !important;}
+  }
+  .menubtn{display:none; position:fixed; top:12px; left:12px; z-index:45; background:var(--ink); color:#F3EBD9; border:none; border-radius:8px; padding:7px 11px;}
+</style>
+</head>
+<body>
+<button class="menubtn" id="menubtn">☰ 工具</button>
+<div class="shell">
+  <aside class="side" id="side">
+    <div class="brand">
+      <svg class="enso" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 8 A42 42 0 1 1 30 16" stroke="#C9A85E" stroke-width="6" stroke-linecap="round"/>
+      </svg>
+      <div class="eyebrow">BUDA × WILL</div>
+      <h1>出海增长协作台</h1>
+      <div class="sub">布达组 · 10 个自包含工具<br>数据存本地浏览器</div>
+    </div>
+    <nav id="nav"></nav>
+    <div class="sidefoot">
+      <button id="exportBtn">⬇ 导出全部数据 (JSON)</button>
+      <button id="importBtn">⬆ 导入数据</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+    </div>
+  </aside>
+
+  <main class="main" id="main"></main>
+</div>
+
+<div class="mask" id="mask"><div class="modal" id="modal"></div></div>
+
+<script>
+/* ============================================================
+   Buda × Will 增长协作台 — 单文件应用
+   纯前端，localStorage 持久化，部署到 Vercel 即可团队访问
+   ============================================================ */
+
+/* ---------- 工具定义（schema 驱动） ---------- */
+const TEAM = ['郎瀚威','吴志远','张文婷','孔维彤','刘嘉凝','李亚茹','代逸如','张成烨','郝灿灿','程果','马志昂','吕教东','kiki','陈霈霖(Kelly)','志伟','潘嘉文'];
+const LANES = ['视频','竞品','SEO','推特','KOL'];
+const STATUS = ['待启动','进行中','已完成'];
+const TYPECOLORS = {
+  '会议分析':{bg:'#E7EEE2',fg:'#5E7A52'},
+  '竞品分析':{bg:'#F7E8EE',fg:'#B05A7E'},
+  '社媒':{bg:'#F7EFD5',fg:'#9A7E45'},
+  '深度报告':{bg:'#E6EAF0',fg:'#46618A'},
+  '剪辑':{bg:'#E3EEE0',fg:'#4F7048'},
+  'SEO':{bg:'#F8E8DC',fg:'#B9722C'},
+};
+const TASK_TYPES = Object.keys(TYPECOLORS);
+
+const TOOLS = [
+  /* 壹 — 周会交付看板 */
+  { key:'weekly', no:'1', tier:'最高', icon:'▦', title:'周会交付看板',
+    type:'delivery',
+    lede:'团队实际的运转节奏：每周一张「本周工作汇总」交付给 Kelly —— 按任务类型记录工时、执行人、交付链接，底部自动合计总工时；客户满意度与状态用于复盘。可按周次筛选、留存历史。',
+    fields:[
+      {name:'week', label:'周次', type:'text', req:true},
+      {name:'title', label:'任务名称', type:'text', req:true},
+      {name:'type', label:'任务类型', type:'select', options:TASK_TYPES},
+      {name:'hours', label:'执行时长（小时）', type:'number'},
+      {name:'owner', label:'执行人（可多人，顿号分隔）', type:'text'},
+      {name:'link', label:'交付链接 / 截图说明', type:'text'},
+      {name:'status', label:'状态', type:'select', options:STATUS},
+      {name:'sat', label:'客户满意度', type:'stars'},
+    ],
+    seed:[
+      {week:'2026-06-11', title:'会议记录分析', type:'会议分析', hours:1, owner:'郝灿灿、吴志远、张文婷', status:'已完成'},
+      {week:'2026-06-11', title:'竞品清单及数据补充', type:'竞品分析', hours:3, owner:'张文婷、吴志远', link:'https://my.feishu.cn/wiki/GwpCw8CBTiv7ZmkKkgOcZnULncg', status:'已完成'},
+      {week:'2026-06-11', title:'社媒看板建立补充', type:'社媒', hours:2, owner:'刘嘉凝、吴志远', link:'https://my.feishu.cn/wiki/VwNZwVEZTisJMXkw5xDc3Tihn2c', status:'已完成'},
+      {week:'2026-06-11', title:'竞品启动分析报告与总结', type:'深度报告', hours:1, owner:'程果', status:'已完成'},
+      {week:'2026-06-11', title:'usecase 研究、录制、剪辑', type:'剪辑', hours:5, owner:'代逸如、吴志远', status:'已完成'},
+      {week:'2026-06-11', title:'素材剪辑优化', type:'剪辑', hours:2, owner:'张成烨', status:'已完成'},
+      {week:'2026-06-11', title:'SEO 诊断与规划', type:'SEO', hours:6, owner:'马志昂', status:'已完成'},
+      {week:'2026-06-11', title:'Fable 5 宣发 Thread', type:'社媒', hours:2, owner:'吕教东、吴志远', status:'已完成'},
+    ]
+  },
+
+  /* 贰 — Use Case 矩阵 */
+  { key:'usecase', no:'2', tier:'高', icon:'▤', title:'Use Case 矩阵',
+    type:'table',
+    lede:'Kelly 反复强调 use case 是第一步、最有效的合作点，整个合作围绕它进行。把画像 × 是否已录屏 × 剪辑状态 × 竞品参考 × 渠道串起来。',
+    fields:[
+      {name:'usecase', label:'Use Case', type:'text', req:true},
+      {name:'persona', label:'用户画像', type:'select', options:['自媒体/内容工作室','电商运营','通用']},
+      {name:'recorded', label:'是否已录屏', type:'select', options:['已录屏','待录屏'], badges:{'已录屏':'b-done','待录屏':'b-todo'}},
+      {name:'edit', label:'剪辑状态', type:'select', options:['未开始','粗剪','已剪辑','已发布'], badges:{'未开始':'b-todo','粗剪':'b-prog','已剪辑':'b-prog','已发布':'b-done'}},
+      {name:'competitor', label:'竞品参考', type:'text'},
+      {name:'channel', label:'发布渠道', type:'text'},
+    ],
+    seed:[
+      {usecase:'电商竞品 Listing 分析 → 生成 5 张 promo 海报', persona:'电商运营', recorded:'已录屏', edit:'已剪辑', competitor:'Hermes · Manus', channel:'视频号 · YouTube'},
+      {usecase:'多会话多 Agent 的内容工作室管理', persona:'自媒体/内容工作室', recorded:'已录屏', edit:'粗剪', competitor:'YouMind', channel:'Twitter · 小红书'},
+      {usecase:'一键 go-to-market production pipeline', persona:'自媒体/内容工作室', recorded:'待录屏', edit:'未开始', competitor:'nonce research', channel:'Twitter'},
+      {usecase:'browser use 自动操作 demo', persona:'电商运营', recorded:'已录屏', edit:'粗剪', competitor:'—', channel:'视频号'},
+    ]
+  },
+
+  /* 叁 — 竞品冷启动分析库 */
+  { key:'competitor', no:'3', tier:'高', icon:'◧', title:'竞品冷启动分析库',
+    type:'cards',
+    lede:'竞品分析是定期发给两个团队"共同学习"的交付物。每个竞品记录流量、增长方式、launch 视频、demo 类型、冷启动关键动作、谁引爆、对 Buda 的参考价值。真实流量数据手动填或从抓取后台导入。',
+    links:[
+      {label:'竞品数据看板（公司面板）', url:'https://my.feishu.cn/wiki/GwpCw8CBTiv7ZmkKkgOcZnULncg', icon:'📊'},
+    ],
+    fields:[
+      {name:'name', label:'竞品名称', type:'text', req:true},
+      {name:'track', label:'赛道', type:'select', options:['同行龙虾','跨行','国内·电商','国内·自媒体']},
+      {name:'traffic', label:'流量', type:'text'},
+      {name:'growth', label:'主要增长方式', type:'text'},
+      {name:'launchVids', label:'Launch 视频量', type:'text'},
+      {name:'demoType', label:'Demo / Use Case 类型', type:'text'},
+      {name:'coldstart', label:'冷启动关键动作', type:'textarea'},
+      {name:'amplifier', label:'谁帮它引爆 / 背书', type:'text'},
+      {name:'value', label:'对 Buda 的参考价值', type:'textarea'},
+    ],
+    seed:[
+      {name:'Hermes (爱马仕) agent', track:'同行龙虾', traffic:'上涨快', growth:'launch 视频 + 短视频', launchVids:'多', demoType:'production pipeline', coldstart:'高频 launch，功能驱动叙事', amplifier:'黄仁勋合照背书', value:'高 — 视频调性与背书路径对标'},
+      {name:'nonce research', track:'同行龙虾', traffic:'—', growth:'launch 视频', launchVids:'多条', demoType:'概念演示 / agent skill', coldstart:'高质量概念视频', amplifier:'—', value:'中 — 视频调性参考'},
+      {name:'Manus', track:'同行龙虾', traffic:'—', growth:'demo case', launchVids:'多', demoType:'通用 agent', coldstart:'—', amplifier:'—', value:'中 — 通用 agent 对标'},
+      {name:'YouMind (U-Mind)', track:'国内·自媒体', traffic:'—', growth:'专攻自媒体人群', launchVids:'—', demoType:'自媒体运营', coldstart:'两个特别的运营策略，值得拆解', amplifier:'—', value:'高 — 关键词 + 框架式 SEO 范式参考'},
+      {name:'阿里巴巴外贸 agent', track:'国内·电商', traffic:'约 500 万', growth:'电商 → 扩品类 → 员工概念', launchVids:'—', demoType:'电商场景', coldstart:'从 0 起步，去年至今做到 500 万流量', amplifier:'—', value:'高 — 国内最贴合的电商竞品'},
+    ]
+  },
+
+  /* 肆 — pSEO 关键词框架 */
+  { key:'seo', no:'4', tier:'中高', icon:'◰', title:'pSEO 关键词框架',
+    type:'table',
+    lede:'质量优先于数量（YouMind 的关键词 + 框架思路）。瓶颈是落地页内容不完善。按 use case 派生关键词簇 → 页面模板 → 质量要点 → 上线状态。',
+    insight:{ type:'key', html:'<b>原则：</b>关键词由 use case 定，内容质量优先于页面数量。先把高意图簇做透，再铺量。'},
+    fields:[
+      {name:'cluster', label:'关键词簇', type:'text', req:true},
+      {name:'keyword', label:'核心关键词', type:'text'},
+      {name:'template', label:'页面模板', type:'text'},
+      {name:'quality', label:'质量要点 / 框架', type:'textarea'},
+      {name:'status', label:'状态', type:'select', options:['规划','制作中','已上线'], badges:{'规划':'b-todo','制作中':'b-prog','已上线':'b-done'}},
+    ],
+    seed:[
+      {cluster:'电商竞品分析', keyword:'amazon competitor listing analysis ai', template:'use-case 落地页 + 真实截屏', quality:'真实操作流程 + 输出样例，对照 use case 视频', status:'规划'},
+      {cluster:'内容工作室', keyword:'ai content studio multi-agent', template:'场景落地页', quality:'多 agent 管理截图 + 框架图', status:'规划'},
+    ]
+  },
+
+  /* 伍 — 多渠道内容日历 */
+  { key:'calendar', no:'5', tier:'中', icon:'▦', title:'多渠道内容日历',
+    type:'calendar',
+    lede:'推特 / YouTube / 视频号 / 播客铺开后用得上。点击某天添加发布计划，标渠道、类型、状态。',
+    fields:[
+      {name:'title', label:'内容标题', type:'text', req:true},
+      {name:'channel', label:'渠道', type:'select', options:['Twitter','YouTube','视频号','小红书','LinkedIn','播客']},
+      {name:'kind', label:'类型', type:'select', options:['Use Case','Launch','概念视频','Thread','蹭热点']},
+      {name:'status', label:'状态', type:'select', options:['计划','制作中','已发布']},
+    ],
+    seed:[]
+  },
+
+  /* 陆 — 视频脚本 + 老外味质检 */
+  { key:'video', no:'6', tier:'中', icon:'▷', title:'视频脚本 + 老外味质检',
+    type:'video',
+    lede:'郎瀚威对"老外味"的具体标准做成交付前质检清单；下方分镜脚本表用于和 Kelly 团队的录屏交接。剪辑在专业工具里做，这里只管规划和把关。',
+    fields:[
+      {name:'shot', label:'镜头', type:'text', req:true},
+      {name:'dur', label:'时长', type:'text'},
+      {name:'visual', label:'画面 / 操作', type:'textarea'},
+      {name:'vo', label:'旁白 / 字幕', type:'textarea'},
+    ],
+    checklist:[
+      '输入 prompt 的环节单独切出，配动效聚焦小框',
+      '字体 / 动效 / 音频 / 语速标准化（中美差异最大处）',
+      '功能驱动叙事，不讲版本号（"Now we can…"）',
+      '先一条概念视频（约 20 秒）→ 再逐功能各一条',
+      '横屏精品视频与短视频分开运营策略',
+      '封面重做，参考竞品高流量封面',
+      '抓取最新竞品 launch 视频（仿剪调性，保持时效）',
+    ],
+    seed:[
+      {shot:'开场 Hook', dur:'0-5s', visual:'打开竞品 Amazon listing，光标聚焦', vo:'Hundreds of dollars. Buda did it in minutes.'},
+      {shot:'功能演示', dur:'5-40s', visual:'读取 listing → 找出 gaps → 生成 5 张 promo 海报', vo:'One product photo, one URL — five creative angles ready.'},
+    ]
+  },
+
+  /* 柒 — 推特关注三分类 */
+  { key:'twitter', no:'7', tier:'中', icon:'✦', title:'推特关注三分类',
+    type:'table',
+    lede:'清理 Kelly 的关注列表（项目里那份 xlsx），重建"正确信息流"。把每个账号标为 保留 / 取关 / 竞品 / KOL。真正的关注操作在 X 上，此表用于决策与追踪。',
+    fields:[
+      {name:'handle', label:'账号 @handle', type:'text', req:true},
+      {name:'category', label:'分类', type:'select', options:['保留','取关','竞品','KOL'], badges:{'保留':'b-done','取关':'b-drop','竞品':'b-key','KOL':'b-purple'}},
+      {name:'note', label:'备注（粉丝量 / 调性 / 为什么）', type:'text'},
+    ],
+    seed:[
+      {handle:'（从 Kelly推特关注列表.xlsx 导入）', category:'保留', note:'示例行 — 删除后逐条录入'},
+    ]
+  },
+
+  /* 捌 — 用户画像卡片 */
+  { key:'persona', no:'8', tier:'中低', icon:'◑', title:'用户画像卡片',
+    type:'cards',
+    lede:'三个画像基本已定。自媒体/内容工作室是核心 PMF；电商运营次要；Coding 已弃（灰显）。作为团队对齐的参考卡片。',
+    fields:[
+      {name:'name', label:'画像', type:'text', req:true},
+      {name:'priority', label:'优先级', type:'select', options:['核心 PMF','次要','已弃'], badges:{'核心 PMF':'b-key','次要':'b-prog','已弃':'b-drop'}},
+      {name:'traits', label:'特点', type:'textarea'},
+      {name:'payreason', label:'付费 / 决策动机', type:'text'},
+      {name:'content', label:'内容偏好', type:'text'},
+    ],
+    seed:[
+      {name:'自媒体 / 内容工作室', priority:'核心 PMF', traits:'动手能力强；先问"能做吗"，紧接着问"和别人有什么区别"', payreason:'差异化', content:'多平台内容（小红书 / 公众号 / Twitter）、多会话多 agent'},
+      {name:'电商运营', priority:'次要', traits:'不爱动手，要"拿来就用"的场景模板，不吃竞品对比', payreason:'落地场景（投放 / 商品运营自动化）', content:'电商场景模板'},
+      {name:'Coding 开发者', priority:'已弃', traits:'选择太多、场景太难吃掉', payreason:'—', content:'—'},
+    ]
+  },
+
+  /* 玖 — KOL 合作追踪 */
+  { key:'kol', no:'9', tier:'低', icon:'◈', title:'KOL 合作追踪',
+    type:'table',
+    lede:'"在路上"的模块，第二个月起。把找 KOL 的过程内化：追踪含金量、复盘成功/失败原因，保证每分钱值得。等正式启动再大量录入。',
+    fields:[
+      {name:'name', label:'KOL / Agency', type:'text', req:true},
+      {name:'platform', label:'平台', type:'text'},
+      {name:'followers', label:'粉丝量', type:'text'},
+      {name:'quality', label:'含金量', type:'stars'},
+      {name:'status', label:'状态', type:'select', options:['待洽谈','洽谈中','合作中','已复盘'], badges:{'待洽谈':'b-todo','洽谈中':'b-prog','合作中':'b-blue','已复盘':'b-done'}},
+      {name:'cost', label:'成本', type:'text'},
+      {name:'review', label:'复盘（成功/失败原因）', type:'textarea'},
+    ],
+    seed:[]
+  },
+
+  /* 拾 — 海外 VC 准备 */
+  { key:'vc', no:'10', tier:'最低', icon:'◇', title:'海外 VC 准备',
+    type:'table',
+    lede:'第四、五个月之后的目标，现在偏占位。最终目标：让海外 VC 看到 local、硅谷味、懂行的项目（先看 LinkedIn / Twitter）。把前置工作记下来。',
+    insight:{ type:'', html:'<b>前置资产：</b>个人品牌 + 公司品牌是龙虾类复杂产品的最好背书。先把 Twitter / LinkedIn / 内容资产打通，VC 对接才高效。'},
+    fields:[
+      {name:'name', label:'VC / 机构 / 人', type:'text', req:true},
+      {name:'stage', label:'阶段', type:'text'},
+      {name:'channel', label:'渠道 / 引荐人', type:'text'},
+      {name:'status', label:'状态', type:'select', options:['规划','前置中','已对接'], badges:{'规划':'b-todo','前置中':'b-prog','已对接':'b-done'}},
+      {name:'prep', label:'前置工作清单', type:'textarea'},
+    ],
+    seed:[]
+  },
+];
+
+/* 社媒矩阵复盘模块（内容来自上传的 Buda 社媒矩阵复盘总览） */
+const SOCIAL = {
+  key:'social', no:'復', tier:'复盘', icon:'◎', title:'社媒矩阵复盘',
+  type:'social',
+  lede:'9 个已复盘平台的进度与核心数据一览：既看清「已完成 / 待启动」全貌，也沉淀各渠道真实表现与下一步重仓方向。平台表可点编辑，把「待补」数值填进去。',
+  links:[
+    {label:'原始数据看板（各渠道周数据）', url:'https://my.feishu.cn/wiki/VwNZwVEZTisJMXkw5xDc3Tihn2c', icon:'📊'},
+    {label:'完整复盘报告（9 渠道）', url:'https://my.feishu.cn/wiki/VwNZwVEZTisJMXkw5xDc3Tihn2c?sheet=M7126D', icon:'📑'},
+  ],
+  fields:[
+    {name:'group', label:'归属', type:'select', options:['官方','创始人','微信','短视频']},
+    {name:'platform', label:'平台 / 账号', type:'text', req:true},
+    {name:'volume', label:'内容量', type:'text'},
+    {name:'data', label:'关键数据 / 定位', type:'textarea'},
+    {name:'status', label:'状态', type:'select', options:['报告完成','进行中','待启动'], badges:{'报告完成':'b-done','进行中':'b-prog','待启动':'b-todo'}},
+  ],
+  charts:[
+    {title:'公众号 · 不同内容类型平均阅读', cap:'翻译 / 锐评一骑绝尘，是次条（课程 / 发布）的 70 倍。', max:880,
+     bars:[{label:'翻译/锐评',val:781,color:'var(--gold)'},{label:'原创资讯',val:235,color:'var(--gold-soft)'},{label:'活动复盘',val:180,color:'#D9C58C'},{label:'次条(课程/发布)',val:11,color:'#CDBFA3'}]},
+    {title:'视频号 · 内容形态平均互动', cap:'概念实验内容跑赢产品演示约 5.6 倍。', max:300,
+     bars:[{label:'概念实验',val:260,color:'var(--lobster)'},{label:'产品演示',val:46,color:'#D7A18F'}]},
+  ],
+  insights:[
+    '<b>① 创始人 ＞ 官方。</b>真实内容力集中在创始人账号；官方多停留在产品更新 / changelog。创始人的判断力与亲历叙事最不可替代。',
+    '<b>② 内容模式 ＞ 发文量。</b>公众号深度 + 翻译内容仅占 68% 篇数，却贡献约 98% 总阅读；4 月起的高频铺量反而稀释了最高触达内容。',
+    '<b>③ 转发是唯一有机增长引擎。</b>头部内容转发率达 14–17%，靠社交分发滚雪球，而非点赞或评论。',
+    '<b>④ 概念实验跑赢产品演示。</b>「假如 AI 龙虾开一家公司」类有机概念内容，互动远超直白功能演示。',
+    '<b>⑤ 后台数据采集待完善。</b>播放量、曝光、涨粉、流量来源多处缺失，目前难判断阅读是否转化为关注与增长。',
+  ],
+  priorities:[
+    {h:'LinkedIn（官方 + 创始人）— 攻 B2B', d:'价值最高、当前最被忽视。创始人背书 + 官方专业内容，直接面向企业客户。'},
+    {h:'YouTube — 沉淀产品 Demo', d:'演示型内容的最佳承载渠道，把产品能力讲清楚、可长期复用。'},
+    {h:'公众号 — 降频提质', d:'停掉低效次条铺量，把产能集中到深度选题 + 创始人亲历叙事，做成固定栏目。'},
+    {h:'视频号 — 固化概念系列', d:'把「假如 AI 龙虾开一家公司」做成稳定节奏的系列，放大已验证的有机格式。'},
+    {h:'小红书 — 原生重做或暂缓', d:'要么按平台调性重新包装，要么阶段性收缩，把产能让给高价值渠道。'},
+  ],
+  checklist:[
+    {lab:'数据补全（让总览升级为完整版）'},
+    {t:'回传官方四号 + 创始人两号的复盘报告 / CSV，补全总表里的「待补」数值'},
+    {t:'各平台后台补采：播放量 · 曝光 · 涨粉 · 流量来源构成'},
+    {lab:'新增平台'},
+    {t:'抖音 数据复盘（导出后台数据后启动）'},
+    {t:'B 站 数据复盘（导出后台数据后启动）'},
+    {lab:'本月执行重点'},
+    {t:'LinkedIn / YouTube 各上线一组面向企业客户的内容，验证 B2B 与 Demo 渠道'},
+    {t:'公众号固定《深度长文 / 翻译》栏目，每周 1 篇；停发低效课程导流贴'},
+    {t:'视频号把「假如 AI 龙虾」概念系列排进固定更新表'},
+  ],
+  seed:[
+    {group:'官方', platform:'Twitter / X', volume:'待补', data:'官方矩阵主阵地，内容偏产品更新与公告；逐条互动数据待回传。', status:'报告完成'},
+    {group:'官方', platform:'LinkedIn', volume:'待补', data:'高价值 B2B 渠道，目前最被忽视——面向企业客户的首要发力点。', status:'报告完成'},
+    {group:'官方', platform:'YouTube', volume:'待补', data:'高价值产品 Demo 渠道，目前最被忽视——演示型内容的最佳承载。', status:'报告完成'},
+    {group:'官方', platform:'Facebook', volume:'待补', data:'以产品更新 / changelog 为主，受众基础待建立。', status:'报告完成'},
+    {group:'创始人', platform:'Twitter / X', volume:'待补', data:'创始人内容力最强，含一条 262K 曝光爆款，建议改写为中文深度长文跨平台导流。', status:'报告完成'},
+    {group:'创始人', platform:'LinkedIn', volume:'待补', data:'B2B 潜力渠道，可与官方 LinkedIn 形成创始人背书联动。', status:'报告完成'},
+    {group:'微信', platform:'公众号 Kelly说AI', volume:'97 篇', data:'中文侧最成熟资产。总阅读 18,040，篇均 186 / 中位 85 / 单篇最高 1,838；头条均 303，翻译·锐评均 781。', status:'报告完成'},
+    {group:'微信', platform:'视频号 陈霈霖', volume:'42 条', data:'互动高度集中（Top3 占 61%，中位 28）；「假如 AI 龙虾开一家公司」概念格式均 260 互动，远超产品演示(46)。', status:'报告完成'},
+    {group:'微信', platform:'小红书 陈霈霖', volume:'45 篇', data:'受众尚处早期（总互动 173 / 中位 2）；内容多由其他渠道搬运，缺平台原生包装。', status:'报告完成'},
+    {group:'短视频', platform:'抖音', volume:'待启动', data:'待导出后台数据后启动复盘。', status:'待启动'},
+    {group:'短视频', platform:'B 站', volume:'待启动', data:'待导出后台数据后启动复盘。', status:'待启动'},
+  ],
+};
+TOOLS.unshift(SOCIAL);
+
+/* ---------- 存储层 ---------- */
+const SKEY = 'buda_will_workspace_v2';
+let STATE = load();
+function load(){
+  let s=null;
+  try{ const raw = localStorage.getItem(SKEY); if(raw) s=JSON.parse(raw); }catch(e){}
+  if(!s) s={ _checklist:{} };
+  if(!s._checklist) s._checklist={};
+  TOOLS.forEach(t=>{ if(!Array.isArray(s[t.key])) s[t.key] = (t.seed||[]).map(r=>({id:uid(),...r})); });
+  return s;
+}
+function save(){ try{ localStorage.setItem(SKEY, JSON.stringify(STATE)); }catch(e){ alert('保存失败：浏览器存储可能已满或被禁用'); } }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function recs(key){ if(!STATE[key]) STATE[key]=[]; return STATE[key]; }
+
+/* ---------- 渲染：导航 ---------- */
+let CURRENT = 'weekly';
+function renderNav(){
+  const groups = {'复盘':[],'最高':[],'高':[],'中高':[],'中':[],'中低':[],'低':[],'最低':[]};
+  TOOLS.forEach(t=> groups[t.tier].push(t));
+  const order = [['复盘','复盘'],['核心','最高'],['核心','高'],['进行','中高'],['进行','中'],['储备','中低'],['储备','低'],['储备','最低']];
+  let html=''; let lastBand='';
+  order.forEach(([band,tier])=>{
+    if(!groups[tier].length) return;
+    if(band!==lastBand){ html += `<div class="navgrp">${band==='复盘'?'复盘报告':band==='核心'?'核心高频':band==='进行'?'进行中':'储备/规划'}</div>`; lastBand=band; }
+    groups[tier].forEach(t=>{
+      html += `<div class="navitem ${t.key===CURRENT?'on':''}" data-k="${t.key}">
+        <span class="no">${t.no}</span><span>${t.title}</span><span class="tier">${t.tier}</span></div>`;
+    });
+  });
+  document.getElementById('nav').innerHTML = html;
+  document.querySelectorAll('.navitem').forEach(el=>el.onclick=()=>{ CURRENT=el.dataset.k; renderNav(); renderMain(); document.getElementById('side').classList.remove('open'); window.scrollTo(0,0); });
+}
+
+/* ---------- 渲染：主区 ---------- */
+function renderMain(){
+  const t = TOOLS.find(x=>x.key===CURRENT);
+  const m = document.getElementById('main');
+  let html = `<div class="sh"><span class="no">${t.no}</span><h2>${t.title}</h2><span class="tag">优先级：${t.tier}</span></div>`;
+  html += `<div class="lede">${t.lede}</div>`;
+  if(t.insight) html += `<div class="ins ${t.insight.type==='key'?'key':''}">${t.insight.html}</div>`;
+  if(t.links) html += `<div class="linkbar">`+ t.links.map(l=>`<a class="dlink" href="${l.url}" target="_blank" rel="noopener">${l.icon||'🔗'} ${esc(l.label)} ↗</a>`).join('') +`</div>`;
+  m.innerHTML = html + `<div id="body"></div>`;
+  const renderer = {delivery:renderDelivery, kanban:renderKanban, table:renderTable, cards:renderCards, calendar:renderCalendar, video:renderVideo, social:renderSocial}[t.type];
+  renderer(t, document.getElementById('body'));
+}
+
+/* ---------- 周会交付看板（按周、工时合计、类型分布） ---------- */
+function typeTag(ty){ if(!ty) return '<span style="color:var(--muted)">—</span>';
+  const c=TYPECOLORS[ty]||{bg:'#EFE9DC',fg:'var(--gold)'};
+  return `<span class="badge" style="background:${c.bg};color:${c.fg}">${esc(ty)}</span>`; }
+function statusBadge(s){ const m={'已完成':'b-done','进行中':'b-prog','待启动':'b-todo'};
+  return m[s]?`<span class="badge ${m[s]}">${esc(s)}</span>`:esc(s||''); }
+
+function renderDelivery(t, el){
+  const list = recs(t.key);
+  const weeks = [...new Set(list.map(r=>r.week).filter(Boolean))].sort().reverse();
+  if(t._week===undefined) t._week = weeks[0] || '';
+  el.innerHTML = `<div class="bar">
+      <button class="btn gold" onclick="openEditor('${t.key}')">＋ 新任务</button>
+      <span class="grow"></span>
+      <select class="filt" id="weekFilt"><option value="">全部周次</option>${weeks.map(w=>`<option ${w===t._week?'selected':''}>${esc(w)}</option>`).join('')}</select>
+    </div><div id="dbody"></div>`;
+  const draw=()=>{
+    const wk=t._week;
+    const rows=list.filter(r=>!wk||r.week===wk);
+    const totalH=rows.reduce((s,r)=>s+(+r.hours||0),0);
+    const doneN=rows.filter(r=>r.status==='已完成').length;
+    const sats=rows.filter(r=>+r.sat>0).map(r=>+r.sat);
+    const avgSat=sats.length?(sats.reduce((a,b)=>a+b,0)/sats.length).toFixed(1):'—';
+    const byType={}; rows.forEach(r=>{ if(r.type) byType[r.type]=(byType[r.type]||0)+(+r.hours||0); });
+    const maxT=Math.max(1,...Object.values(byType));
+    let h=`<div class="chips">
+      <div class="chip"><div class="k">本期总工时</div><div class="v">${totalH}<span style="font-size:13px"> 小时</span></div><div class="d">${rows.length} 个任务</div></div>
+      <div class="chip"><div class="k">已完成</div><div class="v">${doneN}<span style="font-size:14px"> / ${rows.length}</span></div></div>
+      <div class="chip"><div class="k">客户满意度</div><div class="v">${avgSat==='—'?'—':avgSat+' ★'}</div><div class="d">${sats.length?'已评 '+sats.length+' 项':'待客户评分'}</div></div>
+      <div class="chip"><div class="k">当前周次</div><div class="v" style="font-size:17px">${esc(wk||'全部')}</div></div>
+    </div>`;
+    if(Object.keys(byType).length){
+      h += `<div class="cbox" style="margin-bottom:14px"><h4>各类型工时分布</h4><div class="sbars" style="margin-top:9px">`+
+        Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([ty,hr])=>{
+          const c=TYPECOLORS[ty]||{fg:'var(--gold)'};
+          return `<div class="sbar"><span class="bl">${esc(ty)}</span><span class="bt"><span class="bf" style="width:${Math.round(hr/maxT*100)}%;background:${c.fg}"></span></span><span class="bv">${hr}h</span></div>`;
+        }).join('')+`</div></div>`;
+    }
+    h += `<div class="tablewrap"><table><thead><tr>
+      <th>任务名称</th><th>类型</th><th style="text-align:right">工时</th><th>执行人</th><th>交付</th><th>状态</th><th>满意度</th><th></th></tr></thead><tbody>`;
+    if(!rows.length){ h += `<tr><td colspan="8"><div class="empty-state">该周次暂无任务，点「＋ 新任务」</div></td></tr>`; }
+    else{
+      h += rows.map(r=>`<tr>
+        <td><b>${esc(r.title)}</b></td>
+        <td>${typeTag(r.type)}</td>
+        <td style="text-align:right" class="num">${r.hours?esc(r.hours):'—'}</td>
+        <td>${esc(r.owner||'—')}</td>
+        <td>${r.link?`<a href="${esc(r.link)}" target="_blank" style="color:var(--gold);text-decoration:none">查看 ↗</a>`:'<span style="color:var(--muted)">—</span>'}</td>
+        <td>${statusBadge(r.status)}</td>
+        <td>${r.sat?`<span class="stars">${stars(r.sat)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
+        <td class="rowact"><button onclick="openEditor('${t.key}','${r.id}')">编辑</button><button onclick="delRec('${t.key}','${r.id}')">删</button></td></tr>`).join('');
+      h += `<tr style="background:var(--ink)">
+        <td style="color:#EDE3CE;font-weight:700">总计</td><td></td>
+        <td style="text-align:right;color:var(--gold-soft);font-weight:700" class="num">${totalH} h</td>
+        <td colspan="5"></td></tr>`;
+    }
+    h += `</tbody></table></div>`;
+    document.getElementById('dbody').innerHTML=h;
+  };
+  draw();
+  document.getElementById('weekFilt').onchange=e=>{ t._week=e.target.value; draw(); };
+}
+
+/* ---------- 看板 ---------- */
+function renderKanban(t, el){
+  const list = recs(t.key);
+  const stats = STATUS.map(s=>list.filter(r=>r.status===s).length);
+  let html = `<div class="bar"><button class="btn gold" onclick="openEditor('${t.key}')">＋ 新任务</button>
+    <span class="grow"></span><select class="filt" id="laneFilt"><option value="">全部泳道</option>${LANES.map(l=>`<option>${l}</option>`).join('')}</select></div>`;
+  html += `<div class="chips">
+    <div class="chip"><div class="k">待启动</div><div class="v">${stats[0]}</div></div>
+    <div class="chip"><div class="k">进行中</div><div class="v">${stats[1]}</div></div>
+    <div class="chip"><div class="k">已完成</div><div class="v">${stats[2]}</div></div>
+    <div class="chip"><div class="k">本期总任务</div><div class="v">${list.length}</div><div class="d">点击卡片可编辑/移动</div></div>
+  </div>`;
+  const cls = {'已完成':'done','进行中':'prog','待启动':'todo'};
+  html += `<div class="kanban" id="kb"></div>`;
+  el.innerHTML = html;
+  const draw = (laneF)=>{
+    const kb = document.getElementById('kb');
+    kb.innerHTML = STATUS.map(s=>{
+      const items = list.filter(r=>r.status===s && (!laneF || r.lane===laneF));
+      return `<div class="col ${cls[s]}">
+        <div class="chead"><span class="dot"></span><span class="lab">${s}</span><span class="n">${items.length}</span></div>
+        ${items.map(r=>cardHTML(t.key,r)).join('') || '<div style="font-size:10.5px;color:var(--muted);padding:8px 2px">—</div>'}
+      </div>`;
+    }).join('');
+    kb.querySelectorAll('.card').forEach(c=>c.onclick=()=>openEditor(t.key, c.dataset.id));
+  };
+  draw('');
+  document.getElementById('laneFilt').onchange = e=>draw(e.target.value);
+}
+function cardHTML(key,r){
+  return `<div class="card" data-id="${r.id}">
+    <div class="t">${esc(r.title)}</div>
+    <div class="meta">
+      ${r.lane?`<span class="lane lane-${r.lane}">${r.lane}</span>`:''}
+      ${r.owner?`<span class="owner">${esc(r.owner)}</span>`:''}
+      ${r.sat?`<span class="stars">${stars(r.sat)}</span>`:''}
+    </div>
+    ${r.note?`<div class="note">${esc(r.note)}</div>`:''}
+  </div>`;
+}
+
+/* ---------- 表格 ---------- */
+function renderTable(t, el){
+  const list = recs(t.key);
+  const cols = t.fields;
+  let html = `<div class="bar"><button class="btn gold" onclick="openEditor('${t.key}')">＋ 新增</button>
+    <span class="grow"></span><input class="filt" id="search" placeholder="搜索…" style="min-width:180px"></div>`;
+  html += `<div class="tablewrap"><table><thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}<th></th></tr></thead><tbody id="tb"></tbody></table></div>`;
+  el.innerHTML = html;
+  const draw=(q='')=>{
+    const tb=document.getElementById('tb');
+    const rows = list.filter(r=>!q || cols.some(c=>(''+(r[c.name]||'')).toLowerCase().includes(q.toLowerCase())));
+    if(!rows.length){ tb.innerHTML=`<tr><td colspan="${cols.length+1}"><div class="empty-state">暂无记录，点「＋ 新增」开始</div></td></tr>`; return; }
+    tb.innerHTML = rows.map(r=>`<tr>${cols.map(c=>`<td>${cell(c,r[c.name])}</td>`).join('')}
+      <td class="rowact"><button onclick="openEditor('${t.key}','${r.id}')">编辑</button><button onclick="delRec('${t.key}','${r.id}')">删</button></td></tr>`).join('');
+  };
+  draw();
+  document.getElementById('search').oninput=e=>draw(e.target.value);
+}
+function cell(c,v){
+  if(v===undefined||v===null||v==='') return '<span style="color:var(--muted)">—</span>';
+  if(c.type==='stars') return `<span class="stars">${stars(v)}</span>`;
+  if(c.badges && c.badges[v]) return `<span class="badge ${c.badges[v]}">${esc(v)}</span>`;
+  return esc(v);
+}
+
+/* ---------- 卡片（竞品 / 画像） ---------- */
+function renderCards(t, el){
+  const list = recs(t.key);
+  let html = `<div class="bar"><button class="btn gold" onclick="openEditor('${t.key}')">＋ 新增</button></div>`;
+  html += `<div class="cardgrid" id="cg"></div>`;
+  el.innerHTML = html;
+  const cg = document.getElementById('cg');
+  if(!list.length){ cg.innerHTML=`<div class="empty-state">暂无记录</div>`; return; }
+  cg.innerHTML = list.map(r=>{
+    const dim = (r.priority==='已弃' || r.value && /^低/.test(r.value)) ? 'dim':'';
+    const titleField = t.fields[0].name;
+    const prioBadge = r.priority && t.fields.find(f=>f.name==='priority')?.badges?.[r.priority];
+    const trackBadge = r.track ? '<span class="badge b-prog" style="margin-left:6px">'+esc(r.track)+'</span>' : '';
+    return `<div class="ccard ${dim}">
+      <div class="cact"><button onclick="openEditor('${t.key}','${r.id}')">编辑</button><button onclick="delRec('${t.key}','${r.id}')">删</button></div>
+      <h4>${esc(r[titleField])} ${prioBadge?`<span class="badge ${prioBadge}">${esc(r.priority)}</span>`:''}${trackBadge}</h4>
+      ${t.fields.slice(1).filter(f=>f.name!=='priority'&&f.name!=='track').map(f=> r[f.name]?`<div class="row"><span class="lab">${f.label}</span><b>${esc(r[f.name])}</b></div>`:'').join('')}
+    </div>`;
+  }).join('');
+}
+
+/* ---------- 日历 ---------- */
+let calY, calM; // year, month(0-11)
+function renderCalendar(t, el){
+  if(calY===undefined){ const d=new Date(); calY=d.getFullYear(); calM=d.getMonth(); }
+  el.innerHTML = `<div class="calhead">
+      <button class="btn ghost sm" id="pm">‹</button>
+      <span class="mlabel" id="ml"></span>
+      <button class="btn ghost sm" id="nm">›</button>
+      <span class="grow"></span><span style="font-size:10.5px;color:var(--muted)">点击日期添加发布计划</span>
+    </div><div class="calgrid" id="cal"></div>`;
+  document.getElementById('pm').onclick=()=>{ calM--; if(calM<0){calM=11;calY--;} drawCal(t); };
+  document.getElementById('nm').onclick=()=>{ calM++; if(calM>11){calM=0;calY++;} drawCal(t); };
+  drawCal(t);
+}
+function drawCal(t){
+  document.getElementById('ml').textContent = `${calY} 年 ${calM+1} 月`;
+  const cal = document.getElementById('cal');
+  const dows=['日','一','二','三','四','五','六'];
+  let html = dows.map(d=>`<div class="caldow">${d}</div>`).join('');
+  const first = new Date(calY,calM,1).getDay();
+  const days = new Date(calY,calM+1,0).getDate();
+  const chColor={'Twitter':'b-blue','YouTube':'b-key','视频号':'b-prog','小红书':'b-key','LinkedIn':'b-blue','播客':'b-purple'};
+  for(let i=0;i<first;i++) html+=`<div class="calcell empty"></div>`;
+  const list = recs(t.key);
+  for(let d=1; d<=days; d++){
+    const ds = `${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const evs = list.filter(e=>e.date===ds);
+    html += `<div class="calcell" data-d="${ds}"><div class="dnum">${d}</div>
+      ${evs.map(e=>`<div class="ev ${chColor[e.channel]||'b-todo'}" data-id="${e.id}" title="${esc(e.channel||'')} · ${esc(e.kind||'')}">${esc(e.title)}</div>`).join('')}</div>`;
+  }
+  cal.innerHTML = html;
+  cal.querySelectorAll('.calcell:not(.empty)').forEach(c=>{
+    c.onclick=(ev)=>{
+      if(ev.target.classList.contains('ev')){ openEditor(t.key, ev.target.dataset.id); }
+      else { openEditor(t.key, null, {date:c.dataset.d}); }
+    };
+  });
+}
+
+/* ---------- 视频（清单 + 分镜） ---------- */
+function renderVideo(t, el){
+  if(!STATE._checklist[t.key]) STATE._checklist[t.key]={};
+  const ck = STATE._checklist[t.key];
+  let html = `<div class="ck"><div style="font-family:'Noto Serif CJK SC',serif;font-weight:700;font-size:13px;color:var(--gold);margin-bottom:6px">老外味质检清单</div>`;
+  html += t.checklist.map((c,i)=>`<div class="ck-item ${ck[i]?'on':''}" data-i="${i}"><div class="box">${ck[i]?'✓':''}</div><div class="txt">${esc(c)}</div></div>`).join('');
+  html += `</div>`;
+  html += `<div class="bar"><button class="btn gold" onclick="openEditor('${t.key}')">＋ 新增分镜</button><span style="font-size:11px;color:var(--muted);margin-left:6px">分镜脚本（与录屏交接用）</span></div>`;
+  html += `<div class="tablewrap"><table><thead><tr>${t.fields.map(f=>`<th>${f.label}</th>`).join('')}<th></th></tr></thead><tbody id="tb"></tbody></table></div>`;
+  el.innerHTML = html;
+  document.querySelectorAll('.ck-item').forEach(it=>it.onclick=()=>{ const i=it.dataset.i; ck[i]=!ck[i]; save(); renderVideo(t,el); });
+  const list=recs(t.key); const tb=document.getElementById('tb');
+  tb.innerHTML = list.length ? list.map(r=>`<tr>${t.fields.map(f=>`<td>${cell(f,r[f.name])}</td>`).join('')}
+    <td class="rowact"><button onclick="openEditor('${t.key}','${r.id}')">编辑</button><button onclick="delRec('${t.key}','${r.id}')">删</button></td></tr>`).join('')
+    : `<tr><td colspan="${t.fields.length+1}"><div class="empty-state">暂无分镜</div></td></tr>`;
+}
+
+/* ---------- 社媒矩阵复盘 ---------- */
+function renderSocial(t, el){
+  const list = recs(t.key);
+  if(!STATE._checklist[t.key]) STATE._checklist[t.key]={};
+  const ck = STATE._checklist[t.key];
+  const statusBadges = t.fields.find(f=>f.name==='status').badges;
+  let html='';
+  html += `<div class="chips">
+    <div class="chip"><div class="k">已复盘平台</div><div class="v">9</div><div class="d">官方 4 · 创始人 2 · 微信 3</div></div>
+    <div class="chip"><div class="k">公众号累计阅读</div><div class="v">18,040</div><div class="d">篇均 186 · 中位 85</div></div>
+    <div class="chip"><div class="k">公众号 TOP 转发率</div><div class="v">14–17%</div><div class="d">转发是唯一有机增长引擎</div></div>
+    <div class="chip"><div class="k">概念内容 vs 演示</div><div class="v">5.6×</div><div class="d">视频号 260 / 46 互动</div></div>
+  </div>`;
+  // 平台数据总表（可编辑）
+  html += `<div class="bar"><button class="btn gold" onclick="openEditor('${t.key}')">＋ 新增平台</button>
+    <span style="font-size:11px;color:var(--muted);margin-left:6px">各平台数据总表 ——「待补」为后台数据待回传，点编辑填入</span></div>`;
+  html += `<div class="tablewrap"><table><thead><tr><th style="width:22%">平台 / 账号</th><th style="width:11%">内容量</th><th style="width:45%">关键数据 / 定位</th><th style="width:12%">状态</th><th></th></tr></thead><tbody>`;
+  html += list.map(r=>`<tr>
+     <td class="pf"><span class="grp">${esc(r.group||'')}</span>${esc(r.platform)}</td>
+     <td>${(r.volume==='待补'||r.volume==='待启动')?`<span class="tbc">${esc(r.volume)}</span>`:esc(r.volume||'—')}</td>
+     <td>${esc(r.data||'')}</td>
+     <td>${statusBadges[r.status]?`<span class="badge ${statusBadges[r.status]}">${esc(r.status)}</span>`:esc(r.status||'')}</td>
+     <td class="rowact"><button onclick="openEditor('${t.key}','${r.id}')">编辑</button><button onclick="delRec('${t.key}','${r.id}')">删</button></td></tr>`).join('');
+  html += `</tbody></table></div>`;
+  // 图表
+  html += `<div class="sh" style="margin-top:24px"><span class="no">效</span><h2>什么内容真正有效</h2><span class="tag">基于微信生态完整数据</span></div>`;
+  html += `<div class="charts">`;
+  t.charts.forEach(c=>{
+    html += `<div class="cbox"><h4>${esc(c.title)}</h4><div class="cap">${esc(c.cap)}</div><div class="sbars">`+
+      c.bars.map(b=>`<div class="sbar"><span class="bl">${esc(b.label)}</span><span class="bt"><span class="bf" style="width:${Math.round(b.val/c.max*100)}%;background:${b.color}"></span></span><span class="bv">${b.val}</span></div>`).join('')+
+      `</div></div>`;
+  });
+  html += `</div>`;
+  // 洞察
+  html += `<div class="sh" style="margin-top:24px"><span class="no">洞</span><h2>跨渠道核心洞察</h2></div>`;
+  html += t.insights.map((s,i)=>`<div class="ins ${i===0?'key':''}">${s}</div>`).join('');
+  // 重仓优先级
+  html += `<div class="sh" style="margin-top:24px"><span class="no">仓</span><h2>下一步重仓优先级</h2></div>`;
+  html += `<div style="background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:6px 18px">`+
+    t.priorities.map((p,i)=>`<div class="prio"><div class="rk">${i+1}</div><div class="body"><div class="h">${esc(p.h)}</div><div class="d">${esc(p.d)}</div></div></div>`).join('')+`</div>`;
+  // 待办清单
+  html += `<div class="sh" style="margin-top:24px"><span class="no">行</span><h2>下一步动作 &amp; 待补数据</h2></div>`;
+  html += `<div class="ck">`+ t.checklist.map((c,i)=> c.lab
+      ? `<div class="lab">${esc(c.lab)}</div>`
+      : `<div class="ck-item ${ck[i]?'on':''}" data-i="${i}"><div class="box">${ck[i]?'✓':''}</div><div class="txt">${esc(c.t)}</div></div>`).join('') +`</div>`;
+  el.innerHTML = html;
+  el.querySelectorAll('.ck-item').forEach(it=>it.onclick=()=>{ ck[it.dataset.i]=!ck[it.dataset.i]; save(); renderSocial(t,el); });
+}
+
+/* ---------- 编辑器（通用 modal） ---------- */
+let editCtx=null;
+function openEditor(toolKey, id=null, preset={}){
+  const t = TOOLS.find(x=>x.key===toolKey);
+  const list = recs(toolKey);
+  const rec = id ? list.find(r=>r.id===id) : {...preset};
+  editCtx = {toolKey, id, draft:{...rec}};
+  const modal = document.getElementById('modal');
+  let html = `<h3>${id?'编辑':'新增'} · ${t.title}</h3>`;
+  if(preset.date) html += `<div style="font-size:11px;color:var(--gold);margin:-8px 0 12px">日期：${preset.date}</div>`;
+  t.fields.forEach(f=>{
+    html += `<div class="fld"><label>${f.label}${f.req?' *':''}</label>`;
+    const v = rec[f.name]!==undefined ? rec[f.name] : '';
+    if(f.type==='textarea') html += `<textarea data-f="${f.name}">${esc(v)}</textarea>`;
+    else if(f.type==='select') html += `<select data-f="${f.name}"><option value="">—</option>${f.options.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
+    else if(f.type==='stars'){ html += `<div class="starpick" data-f="${f.name}">${[1,2,3,4,5].map(n=>`<span class="${n<=(v||0)?'on':''}" data-n="${n}">★</span>`).join('')}</div>`; }
+    else if(f.type==='number') html += `<input type="number" data-f="${f.name}" value="${esc(v)}">`;
+    else html += `<input type="text" data-f="${f.name}" value="${esc(v)}">`;
+    html += `</div>`;
+  });
+  html += `<div class="mact">${id?`<button class="del" onclick="delRec('${toolKey}','${id}',true)">删除此条</button>`:''}
+    <button class="btn ghost" onclick="closeModal()">取消</button>
+    <button class="btn gold" onclick="saveEditor()">保存</button></div>`;
+  modal.innerHTML = html;
+  document.getElementById('mask').classList.add('show');
+  modal.querySelectorAll('.starpick').forEach(sp=>{
+    sp.querySelectorAll('span').forEach(s=>s.onclick=()=>{
+      const n=+s.dataset.n; editCtx.draft[sp.dataset.f]=n;
+      sp.querySelectorAll('span').forEach(x=>x.classList.toggle('on', +x.dataset.n<=n));
+    });
+  });
+}
+function saveEditor(){
+  const {toolKey,id,draft}=editCtx;
+  const t=TOOLS.find(x=>x.key===toolKey);
+  document.querySelectorAll('#modal [data-f]').forEach(el=>{
+    if(el.classList.contains('starpick')) return;
+    draft[el.dataset.f]=el.value;
+  });
+  const miss=t.fields.find(f=>f.req && !draft[f.name]);
+  if(miss){ alert('请填写：'+miss.label); return; }
+  const list=recs(toolKey);
+  if(id){ const i=list.findIndex(r=>r.id===id); list[i]={...list[i],...draft}; }
+  else { list.push({id:uid(),...draft}); }
+  save(); closeModal(); renderMain();
+}
+function delRec(toolKey,id,fromModal){
+  if(!confirm('确认删除这条记录？')) return;
+  STATE[toolKey]=recs(toolKey).filter(r=>r.id!==id);
+  save(); if(fromModal) closeModal(); renderMain();
+}
+function closeModal(){ document.getElementById('mask').classList.remove('show'); editCtx=null; }
+document.getElementById('mask').onclick=e=>{ if(e.target.id==='mask') closeModal(); };
+
+/* ---------- 工具函数 ---------- */
+function esc(s){ return (''+(s??'')).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function stars(n){ n=+n||0; return [1,2,3,4,5].map(i=>i<=n?'★':'<span class="off">★</span>').join(''); }
+
+/* ---------- 导入 / 导出 ---------- */
+document.getElementById('exportBtn').onclick=()=>{
+  const blob=new Blob([JSON.stringify(STATE,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`buda-workspace-${new Date().toISOString().slice(0,10)}.json`; a.click();
+};
+document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=()=>{ try{ STATE=JSON.parse(r.result); save(); renderMain(); alert('已导入'); }catch(err){ alert('文件格式错误'); } }; r.readAsText(f);
+};
+document.getElementById('menubtn').onclick=()=>document.getElementById('side').classList.toggle('open');
+
+/* ---------- 启动 ---------- */
+renderNav(); renderMain();
+</script>
+</body>
+</html>
